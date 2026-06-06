@@ -1,0 +1,3373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H.E.A.R.D. Log - Chick-fil-A</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    
+    /* Loading Spinner */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #E51636;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+      }
+      
+      .phone-container {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+      
+      .phone-input {
+        width: 100% !important;
+      }
+      
+      .modal-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        padding: 20px !important;
+      }
+      
+      .card {
+        padding: 20px !important;
+      }
+      
+      .wide-card {
+        padding: 15px !important;
+      }
+      
+      .nav-bar {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .nav-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .nav-button {
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        white-space: nowrap;
+      }
+      
+      .title {
+        font-size: 24px !important;
+      }
+
+      .filter-select {
+        width: 100% !important;
+      }
+
+      .action-buttons {
+        flex-direction: column !important;
+      }
+
+      .action-buttons button {
+        width: 100% !important;
+        justify-content: center;
+      }
+
+      .result-card {
+        padding: 12px !important;
+      }
+
+      .pagination button {
+        padding: 12px 20px !important;
+      }
+
+      .search-controls {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+
+      .resolve-form-buttons {
+        flex-direction: column;
+      }
+
+      .resolve-form-buttons button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    
+    /* Touch-friendly button sizing */
+    @media (hover: none) {
+      button {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      input, select, textarea {
+        min-height: 44px;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+      }
+    }
+    
+    /* Offline banner */
+    .offline-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #ffc107;
+      color: #333;
+      padding: 10px;
+      text-align: center;
+      z-index: 9999;
+      font-weight: 600;
+    }
+    
+    /* Checkbox styling */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    
+    .checkbox-container input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    /* Resolved complaint styling */
+    .complaint-resolved {
+      opacity: 0.6;
+      background: #f8f9fa;
+    }
+    
+    .resolved-badge {
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    
+    /* Filter dropdown styling */
+    .filter-select {
+      width: 200px;
+      margin-bottom: 15px;
+    }
+    
+    .active-filter-badge {
+      display: inline-block;
+      background: #E51636;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    
+    /* Help button */
+    .help-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #E51636;
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-size: 24px;
+      z-index: 100;
+      transition: transform 0.2s;
+    }
+    
+    .help-button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Focus states for accessibility */
+    input:focus, select:focus, textarea:focus, button:focus {
+      outline: 3px solid #E51636;
+      outline-offset: 2px;
+    }
+
+    /* Skip link for accessibility */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    .skip-link:focus {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 9999;
+      padding: 10px 20px;
+      background: #E51636;
+      color: white;
+      border-radius: 4px;
+      width: auto;
+      height: auto;
+    }
+
+    /* Toast notification */
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      padding: 15px 25px;
+      border-radius: 8px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+      max-width: 350px;
+    }
+
+    .toast-success { background: #28a745; }
+    .toast-error { background: #dc3545; }
+    .toast-warning { background: #ffc107; color: #333; }
+
+    /* Validation error styling */
+    .field-error {
+      color: #dc3545;
+      font-size: 12px;
+      margin-top: -15px;
+      margin-bottom: 15px;
+    }
+
+    .input-error {
+      border-color: #dc3545 !important;
+    }
+
+    /* Character counter */
+    .char-counter {
+      font-weight: normal;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .char-counter-warning { color: #dc3545; }
+    .char-counter-ok { color: #28a745; }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 20px 0;
+    }
+
+    .pagination button {
+      padding: 8px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #f5f5f5;
+      border-color: #E51636;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination-info {
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* Analytics section */
+    .analytics-section {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid #e0e0e0;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .analytics-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .analytics-card h4 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 150px;
+      padding: 10px 0;
+    }
+
+    .bar-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+    }
+
+    .bar {
+      width: 100%;
+      background: #E51636;
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      transition: height 0.3s ease;
+    }
+
+    .bar-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 5px;
+      text-align: center;
+    }
+
+    .bar-value {
+      font-size: 10px;
+      color: #333;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    /* Effectiveness table */
+    .effectiveness-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .effectiveness-table th,
+    .effectiveness-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .effectiveness-table th {
+      background: #f0f0f0;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .effectiveness-table td {
+      font-size: 13px;
+    }
+
+    .effectiveness-good { color: #28a745; font-weight: 600; }
+    .effectiveness-bad { color: #dc3545; font-weight: 600; }
+
+    /* Follow-up notes */
+    .follow-up-notes {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #d4edda;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #155724;
+      border-left: 3px solid #28a745;
+    }
+
+    .resolve-form {
+      margin-top: 10px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .resolve-form textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+      margin-bottom: 8px;
+    }
+
+    .resolve-form-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    /* Guest profile link */
+    .guest-profile-link {
+      color: #E51636;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-style: dotted;
+    }
+
+    .guest-profile-link:hover {
+      text-decoration-style: solid;
+    }
+
+    /* Sort badge */
+    .sort-badge {
+      display: inline-block;
+      background: #6c757d;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    // ==================== UTILITY FUNCTIONS ====================
+
+    // Debounce hook - delays execution until user stops typing
+    function useDebounce(value, delay) {
+      const [debouncedValue, setDebouncedValue] = useState(value);
+
+      useEffect(() => {
+        const handler = setTimeout(() => {
+          setDebouncedValue(value);
+        }, delay);
+
+        return () => clearTimeout(handler);
+      }, [value, delay]);
+
+      return debouncedValue;
+    }
+
+    // Phone validation
+    function validatePhone(area, prefix, line) {
+      const full = area + prefix + line;
+
+      if (full.length !== 10) {
+        return { valid: false, error: 'Phone number must be 10 digits' };
+      }
+
+      if (area.startsWith('0') || area.startsWith('1')) {
+        return { valid: false, error: 'Area code cannot start with 0 or 1' };
+      }
+
+      // Check for obviously fake numbers
+      if (full === '5555555555' || /^(\d)\1{9}$/.test(full)) {
+        return { valid: false, error: 'Please enter a valid phone number' };
+      }
+
+      return { valid: true };
+    }
+
+    // Form validation
+    function validateForm(formData) {
+      const errors = {};
+
+      // Phone validation
+      const phoneCheck = validatePhone(formData.phoneArea, formData.phonePrefix, formData.phoneLine);
+      if (!phoneCheck.valid) errors.phone = phoneCheck.error;
+
+      // Date validation - no future dates
+      if (formData.dateOccurred) {
+        const selectedDate = new Date(formData.dateOccurred);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        if (selectedDate > today) {
+          errors.dateOccurred = 'Date cannot be in the future';
+        }
+      }
+
+      // Guest name - should not contain numbers
+      if (formData.guestName && /\d/.test(formData.guestName)) {
+        errors.guestName = 'Name should not contain numbers';
+      }
+
+      // Description minimum length
+      if (!formData.notes || formData.notes.length < 10) {
+        errors.notes = 'Please provide more detail (at least 10 characters)';
+      }
+
+      return errors;
+    }
+
+    // Fetch with retry logic
+    async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+      let lastError;
+
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response;
+        } catch (error) {
+          lastError = error;
+          // Wait before retrying (exponential backoff)
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+          }
+        }
+      }
+
+      throw lastError;
+    }
+
+    // Get user-friendly error message
+    function getErrorMessage(error, context) {
+      if (!navigator.onLine) {
+        return 'You appear to be offline. Your data will be saved and submitted when you reconnect.';
+      }
+
+      if (error?.message?.includes('Failed to fetch')) {
+        return 'Unable to connect to the server. Please check your internet connection.';
+      }
+
+      if (error?.message?.includes('403')) {
+        return 'Access denied. Please log in again.';
+      }
+
+      if (error?.message?.includes('429')) {
+        return 'Too many requests. Please wait a moment before trying again.';
+      }
+
+      const messages = {
+        submit: 'Failed to submit complaint. Please try again.',
+        fetch: 'Failed to load complaints. Please refresh the page.',
+        update: 'Failed to update complaint. Your changes were not saved.',
+        delete: 'Failed to delete complaint. Please try again.'
+      };
+
+      return messages[context] || 'An unexpected error occurred. Please try again.';
+    }
+
+    // Simple cache for API responses
+    const apiCache = {
+      data: {},
+      set(key, value, ttlMinutes = 2) {
+        this.data[key] = {
+          value,
+          expiry: Date.now() + (ttlMinutes * 60 * 1000)
+        };
+      },
+      get(key) {
+        const item = this.data[key];
+        if (!item) return null;
+        if (Date.now() > item.expiry) {
+          delete this.data[key];
+          return null;
+        }
+        return item.value;
+      },
+      clear() {
+        this.data = {};
+      }
+    };
+
+    // Offline queue management
+    const offlineQueue = {
+      add(complaint) {
+        const queue = this.getAll();
+        queue.push({
+          ...complaint,
+          queuedAt: new Date().toISOString(),
+          offlineId: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        });
+        localStorage.setItem('queuedComplaints', JSON.stringify(queue));
+      },
+      getAll() {
+        return JSON.parse(localStorage.getItem('queuedComplaints') || '[]');
+      },
+      remove(offlineId) {
+        const queue = this.getAll().filter(c => c.offlineId !== offlineId);
+        localStorage.setItem('queuedComplaints', JSON.stringify(queue));
+      },
+      clear() {
+        localStorage.removeItem('queuedComplaints');
+      },
+      getCount() {
+        return this.getAll().length;
+      }
+    };
+
+    // Analytics calculations
+    function calculateDayOfWeekStats(complaints) {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dayCounts = new Array(7).fill(0);
+
+      complaints.forEach(complaint => {
+        const date = new Date(complaint.timestamp);
+        if (!isNaN(date.getTime())) {
+          dayCounts[date.getDay()]++;
+        }
+      });
+
+      const maxCount = Math.max(...dayCounts, 1);
+
+      return days.map((day, index) => ({
+        label: day,
+        count: dayCounts[index],
+        percentage: (dayCounts[index] / maxCount) * 100
+      }));
+    }
+
+    function calculateWeeklyTrend(complaints) {
+      const weeks = [];
+      const now = new Date();
+
+      for (let i = 3; i >= 0; i--) {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - (i * 7) - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+
+        const count = complaints.filter(c => {
+          const date = new Date(c.timestamp);
+          return date >= weekStart && date <= weekEnd;
+        }).length;
+
+        weeks.push({
+          label: `Week ${4 - i}`,
+          count,
+          percentage: 0
+        });
+      }
+
+      const maxCount = Math.max(...weeks.map(w => w.count), 1);
+      weeks.forEach(w => w.percentage = (w.count / maxCount) * 100);
+
+      return weeks;
+    }
+
+    function calculateResolutionEffectiveness(complaints) {
+      const resolutionCounts = {};
+      const repeatsByResolution = {};
+
+      // Group by phone to find repeat complainers
+      const phoneGroups = {};
+      complaints.forEach(c => {
+        if (!phoneGroups[c.phone]) phoneGroups[c.phone] = [];
+        phoneGroups[c.phone].push(c);
+      });
+
+      // Sort complaints by date for each phone
+      Object.values(phoneGroups).forEach(group => {
+        group.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      });
+
+      // Analyze resolutions
+      complaints.forEach(complaint => {
+        const resolution = complaint.resolution || 'Unknown';
+        resolutionCounts[resolution] = (resolutionCounts[resolution] || 0) + 1;
+
+        // Check if this guest came back after this resolution
+        const guestComplaints = phoneGroups[complaint.phone] || [];
+        const laterComplaints = guestComplaints.filter(c =>
+          new Date(c.timestamp) > new Date(complaint.timestamp)
+        );
+
+        if (laterComplaints.length > 0) {
+          repeatsByResolution[resolution] = (repeatsByResolution[resolution] || 0) + 1;
+        }
+      });
+
+      return Object.keys(resolutionCounts).map(resolution => ({
+        resolution,
+        total: resolutionCounts[resolution],
+        repeats: repeatsByResolution[resolution] || 0,
+        effectivenessRate: Math.round(
+          ((resolutionCounts[resolution] - (repeatsByResolution[resolution] || 0)) /
+           resolutionCounts[resolution]) * 100
+        )
+      })).sort((a, b) => b.total - a.total);
+    }
+
+    // ==================== ICONS ====================
+
+    // Icons
+    const AlertCircle = ({ color = "currentColor", size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    );
+
+    const Search = ({ color = "currentColor", size = 24, style }) => (
+      <svg style={style} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    );
+
+    const BarChart = ({ color = "currentColor", size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="20" x2="12" y2="10"></line>
+        <line x1="18" y1="20" x2="18" y2="4"></line>
+        <line x1="6" y1="20" x2="6" y2="16"></line>
+      </svg>
+    );
+
+    const X = ({ color = "currentColor", size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    );
+
+    const Edit = ({ color = "currentColor", size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+      </svg>
+    );
+
+    const Trash = ({ color = "currentColor", size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    );
+
+    const Settings = ({ color = "currentColor", size = 24 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 12H8m8 0h6.46"></path>
+      </svg>
+    );
+
+    // Styles
+    const styles = {
+      container: {
+        minHeight: '100vh',
+        background: '#E51636',
+        padding: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      card: {
+        background: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '500px',
+      },
+      wideCard: {
+        background: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+        padding: '40px',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+      },
+      title: {
+        fontSize: '32px',
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: '10px',
+        textAlign: 'center',
+      },
+      subtitle: {
+        fontSize: '16px',
+        color: '#666',
+        marginBottom: '30px',
+        textAlign: 'center',
+      },
+      input: {
+        width: '100%',
+        padding: '12px',
+        border: '2px solid #e0e0e0',
+        borderRadius: '8px',
+        fontSize: '16px',
+        marginBottom: '20px',
+        transition: 'border-color 0.3s',
+      },
+      button: {
+        width: '100%',
+        padding: '14px',
+        background: '#E51636',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        minHeight: '44px',
+      },
+      buttonDisabled: {
+        opacity: 0.5,
+        cursor: 'not-allowed',
+      },
+      label: {
+        display: 'block',
+        marginBottom: '8px',
+        color: '#333',
+        fontWeight: '600',
+        fontSize: '14px',
+      },
+      phoneContainer: {
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '20px',
+      },
+      phoneInput: {
+        flex: 1,
+        padding: '12px',
+        border: '2px solid #e0e0e0',
+        borderRadius: '8px',
+        fontSize: '16px',
+        textAlign: 'center',
+        transition: 'border-color 0.3s',
+      },
+      select: {
+        width: '100%',
+        padding: '12px',
+        border: '2px solid #e0e0e0',
+        borderRadius: '8px',
+        fontSize: '16px',
+        marginBottom: '20px',
+        backgroundColor: 'white',
+        cursor: 'pointer',
+        minHeight: '44px',
+      },
+      textarea: {
+        width: '100%',
+        padding: '12px',
+        border: '2px solid #e0e0e0',
+        borderRadius: '8px',
+        fontSize: '16px',
+        marginBottom: '20px',
+        minHeight: '100px',
+        fontFamily: 'inherit',
+        resize: 'vertical',
+      },
+      errorText: {
+        color: '#e74c3c',
+        fontSize: '14px',
+        marginBottom: '20px',
+        textAlign: 'center',
+      },
+      successText: {
+        color: '#27ae60',
+        fontSize: '14px',
+        marginBottom: '20px',
+        textAlign: 'center',
+      },
+      nav: {
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '30px',
+        borderBottom: '2px solid #e0e0e0',
+        paddingBottom: '10px',
+        flexWrap: 'wrap',
+      },
+      navButton: {
+        padding: '10px 20px',
+        background: 'transparent',
+        border: 'none',
+        color: '#666',
+        fontSize: '16px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        borderBottom: '3px solid transparent',
+        transition: 'all 0.3s',
+        minHeight: '44px',
+      },
+      navButtonActive: {
+        color: '#E51636',
+        borderBottom: '3px solid #E51636',
+      },
+      badge: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '8px 12px',
+        borderRadius: '20px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        marginTop: '10px',
+        cursor: 'pointer',
+        transition: 'transform 0.2s',
+      },
+      yellowBadge: {
+        backgroundColor: '#fff3cd',
+        color: '#856404',
+        border: '2px solid #ffc107',
+      },
+      redBadge: {
+        backgroundColor: '#f8d7da',
+        color: '#721c24',
+        border: '2px solid #dc3545',
+      },
+      modal: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      },
+      modalContent: {
+        background: 'white',
+        borderRadius: '12px',
+        padding: '30px',
+        maxWidth: '600px',
+        width: '90%',
+        maxHeight: '80vh',
+        overflow: 'auto',
+      },
+      modalHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+      },
+      modalTitle: {
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: '#333',
+      },
+      closeButton: {
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '5px',
+        color: '#666',
+      },
+      complaintCard: {
+        border: '1px solid #e0e0e0',
+        borderRadius: '8px',
+        padding: '15px',
+        marginBottom: '15px',
+      },
+      complaintDate: {
+        fontSize: '12px',
+        color: '#999',
+        marginBottom: '8px',
+      },
+      complaintDetail: {
+        fontSize: '14px',
+        color: '#333',
+        marginBottom: '5px',
+      },
+      statsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px',
+      },
+      statCard: {
+        background: '#E51636',
+        color: 'white',
+        padding: '20px',
+        borderRadius: '12px',
+        textAlign: 'center',
+      },
+      statNumber: {
+        fontSize: '36px',
+        fontWeight: 'bold',
+        marginBottom: '5px',
+      },
+      statLabel: {
+        fontSize: '14px',
+        opacity: 0.9,
+      },
+      searchContainer: {
+        marginBottom: '30px',
+      },
+      searchInput: {
+        width: '100%',
+        padding: '12px 40px 12px 12px',
+        border: '2px solid #e0e0e0',
+        borderRadius: '8px',
+        fontSize: '16px',
+      },
+      resultsContainer: {
+        marginTop: '20px',
+      },
+      resultCard: {
+        border: '1px solid #e0e0e0',
+        borderRadius: '8px',
+        padding: '20px',
+        marginBottom: '15px',
+        transition: 'box-shadow 0.3s',
+      },
+      actionButtons: {
+        display: 'flex',
+        gap: '10px',
+        marginTop: '10px',
+      },
+      actionButton: {
+        padding: '6px 12px',
+        border: '1px solid #e0e0e0',
+        borderRadius: '6px',
+        background: 'white',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        fontSize: '14px',
+        transition: 'all 0.2s',
+      },
+    };
+
+    // Google Apps Script URL - REPLACE THIS WITH YOUR ACTUAL APPS SCRIPT URL
+    // SETUP: paste your deployed Apps Script web app URL here (see SETUP_GUIDE.md, Step 4)
+    const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL';
+
+    // Session timeout utility
+    function useSessionTimeout(timeoutMinutes = 30, onTimeout) {
+      const timeoutRef = useRef();
+      const [lastActivity, setLastActivity] = useState(Date.now());
+
+      const resetTimeout = useCallback(() => {
+        setLastActivity(Date.now());
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        
+        timeoutRef.current = setTimeout(() => {
+          onTimeout();
+        }, timeoutMinutes * 60 * 1000);
+      }, [timeoutMinutes, onTimeout]);
+
+      useEffect(() => {
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        
+        const handleActivity = () => resetTimeout();
+        
+        events.forEach(event => {
+          document.addEventListener(event, handleActivity);
+        });
+
+        resetTimeout();
+
+        return () => {
+          events.forEach(event => {
+            document.removeEventListener(event, handleActivity);
+          });
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+      }, [resetTimeout]);
+
+      return lastActivity;
+    }
+
+    // Offline detection hook
+    function useOnlineStatus() {
+      const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+      useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+          window.removeEventListener('online', handleOnline);
+          window.removeEventListener('offline', handleOffline);
+        };
+      }, []);
+
+      return isOnline;
+    }
+
+    // Loading Spinner Component
+    function LoadingSpinner({ text = "Loading..." }) {
+      return (
+        <div style={{ textAlign: 'center', padding: '20px' }} role="status" aria-live="polite">
+          <div className="spinner" aria-hidden="true"></div>
+          <div style={{ color: '#666', marginTop: '10px' }}>{text}</div>
+        </div>
+      );
+    }
+
+    // Toast Notification Component
+    function Toast({ message, type = 'success', onClose }) {
+      useEffect(() => {
+        const timer = setTimeout(onClose, 4000);
+        return () => clearTimeout(timer);
+      }, [onClose]);
+
+      return (
+        <div className={`toast toast-${type}`} role="alert" aria-live="polite">
+          {type === 'success' && '✓ '}
+          {type === 'error' && '✕ '}
+          {type === 'warning' && '⚠ '}
+          {message}
+        </div>
+      );
+    }
+
+    // Toast Container - manages multiple toasts
+    function ToastContainer({ toasts, removeToast }) {
+      return (
+        <div aria-live="polite" aria-atomic="true">
+          {toasts.map(toast => (
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    // Custom hook for toast notifications
+    function useToast() {
+      const [toasts, setToasts] = useState([]);
+
+      const addToast = useCallback((message, type = 'success') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+      }, []);
+
+      const removeToast = useCallback((id) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, []);
+
+      return { toasts, addToast, removeToast };
+    }
+
+    // Analytics Chart Component
+    function AnalyticsChart({ data, title }) {
+      return (
+        <div className="analytics-card">
+          <h4>{title}</h4>
+          <div className="bar-chart">
+            {data.map((item, index) => (
+              <div key={index} className="bar-container">
+                <div className="bar-value">{item.count}</div>
+                <div
+                  className="bar"
+                  style={{ height: `${item.percentage}%` }}
+                  title={`${item.label}: ${item.count}`}
+                />
+                <div className="bar-label">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Resolution Effectiveness Table Component
+    function EffectivenessTable({ data }) {
+      return (
+        <div className="analytics-card">
+          <h4>Resolution Effectiveness</h4>
+          <table className="effectiveness-table">
+            <thead>
+              <tr>
+                <th>Resolution</th>
+                <th>Total</th>
+                <th>Effectiveness</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, index) => (
+                <tr key={index}>
+                  <td>{row.resolution}</td>
+                  <td>{row.total}</td>
+                  <td className={row.effectivenessRate >= 70 ? 'effectiveness-good' : 'effectiveness-bad'}>
+                    {row.effectivenessRate}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p style={{ fontSize: '11px', color: '#999', marginTop: '10px' }}>
+            Effectiveness = % of guests who didn't return with another complaint
+          </p>
+        </div>
+      );
+    }
+
+    // Guest Profile Modal Component
+    function GuestProfileModal({ isOpen, onClose, phone, complaints }) {
+      if (!isOpen || !phone) return null;
+
+      const guestComplaints = complaints
+        .filter(c => String(c.phone) === String(phone))
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      if (guestComplaints.length === 0) return null;
+
+      const guestName = guestComplaints[0]?.guestName || 'Unknown Guest';
+      const totalComplaints = guestComplaints.length;
+      const resolvedCount = guestComplaints.filter(c => c.resolved).length;
+      const unresolvedCount = totalComplaints - resolvedCount;
+
+      const issueCounts = {};
+      guestComplaints.forEach(c => {
+        issueCounts[c.issueType] = (issueCounts[c.issueType] || 0) + 1;
+      });
+      const topIssue = Object.keys(issueCounts).length > 0
+        ? Object.keys(issueCounts).reduce((a, b) => issueCounts[a] > issueCounts[b] ? a : b)
+        : 'N/A';
+
+      const formattedPhone = String(phone).replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+
+      return (
+        <div style={styles.modal} onClick={onClose}>
+          <div style={styles.modalContent} className="modal-content" onClick={e => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Guest Profile</h2>
+              <button style={styles.closeButton} onClick={onClose} aria-label="Close modal">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ margin: '0 0 5px 0' }}>{guestName}</h3>
+              <div style={{ color: '#666', fontSize: '14px' }}>{formattedPhone}</div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+              <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#E51636' }}>{totalComplaints}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>Total</div>
+              </div>
+              <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>{unresolvedCount}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>Unresolved</div>
+              </div>
+              <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>{resolvedCount}</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>Resolved</div>
+              </div>
+            </div>
+
+            <div style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
+              <strong>Most Common Issue:</strong> {topIssue}
+            </div>
+
+            <h4 style={{ marginBottom: '10px', color: '#333' }}>Complaint Timeline</h4>
+
+            {guestComplaints.map((complaint, index) => (
+              <div key={complaint.id || index} style={{
+                borderLeft: '3px solid #E51636',
+                paddingLeft: '15px',
+                marginLeft: '10px',
+                marginBottom: '15px',
+                paddingBottom: '15px',
+                borderBottom: index < guestComplaints.length - 1 ? '1px solid #f0f0f0' : 'none',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  left: '-7px',
+                  top: '0',
+                  width: '11px',
+                  height: '11px',
+                  borderRadius: '50%',
+                  background: complaint.resolved ? '#28a745' : '#E51636',
+                  border: '2px solid white',
+                  boxShadow: '0 0 0 1px ' + (complaint.resolved ? '#28a745' : '#E51636')
+                }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                  <strong style={{ fontSize: '13px' }}>{new Date(complaint.timestamp).toLocaleDateString()}</strong>
+                  {complaint.resolved && <span className="resolved-badge">Resolved</span>}
+                </div>
+                <div style={{ fontSize: '13px', color: '#666' }}>
+                  <div><strong>Issue:</strong> {complaint.issueType}</div>
+                  <div><strong>Resolution:</strong> {complaint.resolution}</div>
+                  <div><strong>Manager:</strong> {complaint.managerName}</div>
+                  {complaint.notes && <div><strong>Notes:</strong> {complaint.notes}</div>}
+                  {complaint.followUpNotes && (
+                    <div className="follow-up-notes" style={{ marginTop: '5px' }}>
+                      <strong>Follow-up:</strong> {complaint.followUpNotes}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Confirmation Dialog Component
+    function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel" }) {
+      const modalRef = useRef();
+
+      // Handle Escape key to close
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === 'Escape') onClose();
+        };
+
+        if (isOpen) {
+          document.addEventListener('keydown', handleKeyDown);
+          modalRef.current?.focus();
+        }
+
+        return () => document.removeEventListener('keydown', handleKeyDown);
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+
+      return (
+        <div
+          style={styles.modal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-dialog-title"
+        >
+          <div
+            style={styles.modalContent}
+            ref={modalRef}
+            tabIndex={-1}
+          >
+            <h3 id="confirm-dialog-title" style={{ marginBottom: '20px' }}>{title}</h3>
+            <p style={{ marginBottom: '30px' }}>{message}</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={onClose}
+                style={{ ...styles.button, width: 'auto', padding: '10px 20px', background: '#6c757d' }}
+              >
+                {cancelText}
+              </button>
+              <button
+                onClick={onConfirm}
+                style={{ ...styles.button, width: 'auto', padding: '10px 20px' }}
+              >
+                {confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Edit Complaint Modal
+    function EditComplaintModal({ complaint, isOpen, onClose, onSave }) {
+      const modalRef = useRef();
+      const [formData, setFormData] = useState({
+        phoneArea: '',
+        phonePrefix: '',
+        phoneLine: '',
+        guestName: '',
+        orderNumber: '',
+        orderType: '',
+        issueType: '',
+        resolution: '',
+        includedDessert: false,
+        dayPart: '',
+        dateOccurred: '',
+        managerName: '',
+        notes: '',
+      });
+
+      // Handle Escape key to close
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === 'Escape') onClose();
+        };
+
+        if (isOpen) {
+          document.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => document.removeEventListener('keydown', handleKeyDown);
+      }, [isOpen, onClose]);
+
+      useEffect(() => {
+        if (complaint && isOpen) {
+          const phone = complaint.phone.replace(/\D/g, '');
+          setFormData({
+            phoneArea: phone.substring(0, 3),
+            phonePrefix: phone.substring(3, 6),
+            phoneLine: phone.substring(6, 10),
+            guestName: complaint.guestName || '',
+            orderNumber: complaint.orderNumber || '',
+            orderType: complaint.orderType || '',
+            issueType: complaint.issueType || '',
+            resolution: complaint.resolution || '',
+            includedDessert: complaint.includedDessert || false,
+            dayPart: complaint.dayPart || '',
+            dateOccurred: complaint.dateOccurred || '',
+            managerName: complaint.managerName || '',
+            notes: complaint.notes || '',
+          });
+        }
+      }, [complaint, isOpen]);
+
+      const handleSave = () => {
+        const updatedData = {
+          ...complaint,
+          phone: formData.phoneArea + formData.phonePrefix + formData.phoneLine,
+          guestName: formData.guestName,
+          orderNumber: formData.orderNumber,
+          orderType: formData.orderType,
+          issueType: formData.issueType,
+          resolution: formData.resolution,
+          includedDessert: formData.includedDessert,
+          dayPart: formData.dayPart,
+          dateOccurred: formData.dateOccurred,
+          managerName: formData.managerName,
+          notes: formData.notes,
+        };
+        onSave(updatedData);
+      };
+
+      if (!isOpen) return null;
+
+      return (
+        <div style={styles.modal} role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+          <div style={styles.modalContent} ref={modalRef}>
+            <div style={styles.modalHeader}>
+              <h2 id="edit-modal-title" style={styles.modalTitle}>Edit Complaint</h2>
+              <button style={styles.closeButton} onClick={onClose} aria-label="Close modal">
+                <X size={24} />
+              </button>
+            </div>
+
+            <label style={styles.label}>Phone Number *</label>
+            <div style={styles.phoneContainer} className="phone-container">
+              <input
+                type="text"
+                style={styles.phoneInput}
+                className="phone-input"
+                value={formData.phoneArea}
+                onChange={(e) => setFormData({ ...formData, phoneArea: e.target.value.replace(/\D/g, '').slice(0, 3) })}
+                placeholder="555"
+                maxLength="3"
+              />
+              <input
+                type="text"
+                style={styles.phoneInput}
+                className="phone-input"
+                value={formData.phonePrefix}
+                onChange={(e) => setFormData({ ...formData, phonePrefix: e.target.value.replace(/\D/g, '').slice(0, 3) })}
+                placeholder="123"
+                maxLength="3"
+              />
+              <input
+                type="text"
+                style={styles.phoneInput}
+                className="phone-input"
+                value={formData.phoneLine}
+                onChange={(e) => setFormData({ ...formData, phoneLine: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                placeholder="4567"
+                maxLength="4"
+              />
+            </div>
+
+            <label style={styles.label}>Guest Name *</label>
+            <input
+              type="text"
+              style={styles.input}
+              value={formData.guestName}
+              onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+            />
+
+            <label style={styles.label}>Order Number *</label>
+            <input
+              type="text"
+              style={styles.input}
+              value={formData.orderNumber}
+              onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+            />
+
+            <label style={styles.label}>Order Type *</label>
+            <select
+              style={styles.select}
+              value={formData.orderType}
+              onChange={(e) => setFormData({ ...formData, orderType: e.target.value })}
+            >
+              <option value="">Select order type</option>
+              <option value="Dine-in">Dine-in</option>
+              <option value="Drive-thru">Drive-thru</option>
+              <option value="Mobile Order">Mobile Order</option>
+              <option value="Delivery">Delivery</option>
+              <option value="Catering">Catering</option>
+            </select>
+
+            <label style={styles.label}>Issue Type *</label>
+            <select
+              style={styles.select}
+              value={formData.issueType}
+              onChange={(e) => setFormData({ ...formData, issueType: e.target.value })}
+            >
+              <option value="">Select issue type</option>
+              <option value="Missing Item">Missing Item</option>
+              <option value="Wrong Item">Wrong Item</option>
+              <option value="Food Quality">Food Quality</option>
+              <option value="Service Issue">Service Issue</option>
+              <option value="Wait Time">Wait Time</option>
+              <option value="Cleanliness">Cleanliness</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <label style={styles.label}>Resolution *</label>
+            <select
+              style={styles.select}
+              value={formData.resolution}
+              onChange={(e) => setFormData({ ...formData, resolution: e.target.value })}
+            >
+              <option value="">Select resolution</option>
+              <option value="Refund">Refund</option>
+              <option value="Replacement">Replacement</option>
+              <option value="Free Item">Free Item</option>
+              <option value="Apology Only">Apology Only</option>
+              <option value="No Resolution">No Resolution</option>
+            </select>
+
+            <div className="checkbox-container" style={{ marginBottom: '20px' }}>
+              <input
+                type="checkbox"
+                id="editIncludedDessert"
+                checked={formData.includedDessert}
+                onChange={(e) => setFormData({ ...formData, includedDessert: e.target.checked })}
+              />
+              <label htmlFor="editIncludedDessert">
+                Included free apology dessert (cookie/brownie/IceDream cone)
+              </label>
+            </div>
+
+            <label style={styles.label}>Day Part *</label>
+            <select
+              style={styles.select}
+              value={formData.dayPart}
+              onChange={(e) => setFormData({ ...formData, dayPart: e.target.value })}
+            >
+              <option value="">Select day part</option>
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+            </select>
+
+            <label style={styles.label}>Date Occurred *</label>
+            <input
+              type="date"
+              style={styles.input}
+              value={formData.dateOccurred}
+              onChange={(e) => setFormData({ ...formData, dateOccurred: e.target.value })}
+            />
+
+            <label style={styles.label}>Manager Name *</label>
+            <input
+              type="text"
+              style={styles.input}
+              value={formData.managerName}
+              onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
+            />
+
+            <label style={styles.label}>Description *</label>
+            <textarea
+              style={styles.textarea}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder="Describe the complaint in detail..."
+              required
+            />
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button
+                onClick={onClose}
+                style={{ ...styles.button, width: 'auto', padding: '10px 20px', background: '#6c757d' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                style={{ ...styles.button, width: 'auto', padding: '10px 20px' }}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Help Modal Component
+    function HelpModal({ isOpen, onClose }) {
+      if (!isOpen) return null;
+
+      return (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>How to Use H.E.A.R.D. Log</h2>
+              <button style={styles.closeButton} onClick={onClose}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ lineHeight: '1.6' }}>
+              <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>📋 Report a Complaint</h3>
+              <ol>
+                <li>Enter the guest's phone number (area code, prefix, line)</li>
+                <li>The system will automatically check for previous complaints</li>
+                <li>Fill in all required fields marked with *</li>
+                <li>Click "Submit Complaint" to save</li>
+              </ol>
+
+              <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>⚠️ Alert Badges</h3>
+              <ul>
+                <li><strong>Yellow Badge:</strong> Guest has 2 complaints in 30 days (this will be #3)</li>
+                <li><strong>Red Badge:</strong> Guest has 3+ complaints in 30 days</li>
+                <li>Click the badge to view complaint history</li>
+              </ul>
+
+              <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>📊 Dashboard</h3>
+              <p>View statistics including total complaints, flagged guests, and trends. Mark complaints as resolved using the checkbox.</p>
+
+              <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>🔍 Search</h3>
+              <p>Use the filter dropdown to search specific fields or search across all fields. Edit or delete complaints using the action buttons.</p>
+
+              <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>⚙️ Settings</h3>
+              <p>Configure email alerts for repeat complainers (4+ complaints). Access with settings passcode.</p>
+
+              <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>🔧 Troubleshooting</h3>
+              <ul>
+                <li><strong>Data won't load:</strong> Check internet connection, refresh the page</li>
+                <li><strong>Submission failed:</strong> Wait 30 seconds and try again</li>
+                <li><strong>Session expired:</strong> Log in again with your location's passcode</li>
+                <li><strong>Offline mode:</strong> Complaints are saved locally and will submit when online</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Settings Modal Component
+    function SettingsModal({ isOpen, onClose }) {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [settingsPasscode, setSettingsPasscode] = useState('');
+      const [emailList, setEmailList] = useState([]);
+      const [newEmail, setNewEmail] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const [archiveDays, setArchiveDays] = useState(
+        parseInt(localStorage.getItem('archiveDays') || '35')
+      );
+
+      const handleArchiveDaysChange = (value) => {
+        const parsed = parseInt(value);
+        if (isNaN(parsed)) return;
+        const days = Math.max(7, Math.min(365, parsed));
+        setArchiveDays(days);
+        localStorage.setItem('archiveDays', String(days));
+      };
+
+      useEffect(() => {
+        if (isAuthenticated && isOpen) {
+          fetchEmailSettings();
+        }
+      }, [isAuthenticated, isOpen]);
+
+      const fetchEmailSettings = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`${APPS_SCRIPT_URL}?action=getEmailSettings`);
+          const data = await response.json();
+          setEmailList(data.emails || []);
+        } catch (error) {
+          console.error('Error fetching email settings:', error);
+        }
+        setLoading(false);
+      };
+
+      const handleSettingsLogin = (e) => {
+        e.preventDefault();
+        if (settingsPasscode === 'YOUR_SETTINGS_PASSCODE') { // SETUP: set your 4-digit settings passcode (SETUP_GUIDE.md, Step 5)
+          setIsAuthenticated(true);
+          setError('');
+        } else {
+          setError('Incorrect settings passcode');
+        }
+      };
+
+      const addEmail = async () => {
+        if (!newEmail || !newEmail.includes('@')) {
+          setError('Please enter a valid email');
+          return;
+        }
+
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'addEmail',
+              email: newEmail
+            }),
+          });
+          
+          if (response.ok) {
+            setEmailList([...emailList, newEmail]);
+            setNewEmail('');
+            setError('');
+          }
+        } catch (error) {
+          console.error('Error adding email:', error);
+          setError('Failed to add email');
+        }
+      };
+
+      const removeEmail = async (email) => {
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'removeEmail',
+              email: email
+            }),
+          });
+          
+          if (response.ok) {
+            setEmailList(emailList.filter(e => e !== email));
+          }
+        } catch (error) {
+          console.error('Error removing email:', error);
+        }
+      };
+
+      if (!isOpen) return null;
+
+      return (
+        <div style={styles.modal}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Settings</h2>
+              <button style={styles.closeButton} onClick={onClose}>
+                <X size={24} />
+              </button>
+            </div>
+
+            {!isAuthenticated ? (
+              <form onSubmit={handleSettingsLogin}>
+                <label style={styles.label}>Enter Settings Passcode</label>
+                <input
+                  type="password"
+                  style={styles.input}
+                  value={settingsPasscode}
+                  onChange={(e) => setSettingsPasscode(e.target.value)}
+                  placeholder="Enter 4-digit settings passcode"
+                  maxLength="4"
+                />
+                {error && <div style={styles.errorText}>{error}</div>}
+                <button type="submit" style={styles.button}>
+                  Access Settings
+                </button>
+              </form>
+            ) : (
+              <div>
+                <h3 style={{ marginBottom: '20px' }}>Email Alert Configuration</h3>
+                <p style={{ marginBottom: '20px', color: '#666' }}>
+                  Emails will be sent when a guest with 4+ complaints submits a new complaint.
+                </p>
+
+                {loading ? (
+                  <LoadingSpinner text="Loading settings..." />
+                ) : (
+                  <>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={styles.label}>Add Email Address</label>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                          type="email"
+                          style={{ ...styles.input, marginBottom: '0' }}
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          placeholder="email@example.com"
+                        />
+                        <button
+                          onClick={addEmail}
+                          style={{ ...styles.button, width: 'auto', padding: '0 20px' }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={styles.label}>Current Email Recipients</label>
+                      {emailList.length === 0 ? (
+                        <p style={{ color: '#999' }}>No email recipients configured</p>
+                      ) : (
+                        emailList.map((email, index) => (
+                          <div key={index} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '10px',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '8px',
+                            marginBottom: '10px'
+                          }}>
+                            <span>{email}</span>
+                            <button
+                              onClick={() => removeEmail(email)}
+                              style={{
+                                background: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                padding: '5px 10px',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {error && <div style={styles.errorText}>{error}</div>}
+
+                <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #e0e0e0' }}>
+                  <h3 style={{ marginBottom: '10px' }}>Archive Settings</h3>
+                  <p style={{ marginBottom: '15px', color: '#666', fontSize: '14px' }}>
+                    Complaints older than this many days are hidden from the dashboard and search.
+                  </p>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      min="7"
+                      max="365"
+                      value={archiveDays}
+                      onChange={(e) => handleArchiveDaysChange(e.target.value)}
+                      style={{ ...styles.input, width: '100px', marginBottom: '0' }}
+                    />
+                    <span style={{ color: '#666' }}>days</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+                    Min: 7 days / Max: 365 days. Changes apply on next page load.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+      const [passcode, setPasscode] = useState('');
+      const [error, setError] = useState('');
+      const [currentView, setCurrentView] = useState('form');
+      const [showHelp, setShowHelp] = useState(false);
+      const [showSettings, setShowSettings] = useState(false);
+      const isOnline = useOnlineStatus();
+
+      const handleSessionTimeout = () => {
+        alert('Session expired due to inactivity');
+        setIsLoggedIn(false);
+        setPasscode('');
+      };
+
+      useSessionTimeout(30, handleSessionTimeout);
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (passcode === 'YOUR_LOGIN_PASSCODE') { // SETUP: set your 4-digit login passcode (SETUP_GUIDE.md, Step 5)
+          setIsLoggedIn(true);
+          setError('');
+        } else {
+          setError('Incorrect passcode. Please try again.');
+        }
+      };
+
+      if (!isLoggedIn) {
+        return (
+          <div style={styles.container}>
+            <div style={styles.card} className="card">
+              <h1 style={styles.title} className="title">H.E.A.R.D. Log</h1>
+              <p style={styles.subtitle}>Chick-fil-A Guest Complaint Tracker</p>
+              <form onSubmit={handleLogin}>
+                <label style={styles.label}>Enter Passcode</label>
+                <input
+                  type="password"
+                  style={styles.input}
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="Enter 4-digit passcode"
+                  maxLength="4"
+                />
+                {error && <div style={styles.errorText}>{error}</div>}
+                <button type="submit" style={styles.button}>
+                  Login
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          {!isOnline && (
+            <div className="offline-banner">
+              You are currently offline. Complaints will be saved locally and submitted when connection is restored.
+            </div>
+          )}
+          
+          <div style={styles.container}>
+            <div style={styles.wideCard} className="wide-card">
+              <h1 style={styles.title} className="title">H.E.A.R.D. Log</h1>
+              <div style={styles.nav} className="nav-bar">
+                <button
+                  style={{
+                    ...styles.navButton,
+                    ...(currentView === 'form' ? styles.navButtonActive : {}),
+                  }}
+                  className="nav-button"
+                  onClick={() => setCurrentView('form')}
+                >
+                  Report Complaint
+                </button>
+                <button
+                  style={{
+                    ...styles.navButton,
+                    ...(currentView === 'dashboard' ? styles.navButtonActive : {}),
+                  }}
+                  className="nav-button"
+                  onClick={() => setCurrentView('dashboard')}
+                >
+                  <BarChart size={18} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+                  Dashboard
+                </button>
+                <button
+                  style={{
+                    ...styles.navButton,
+                    ...(currentView === 'search' ? styles.navButtonActive : {}),
+                  }}
+                  className="nav-button"
+                  onClick={() => setCurrentView('search')}
+                >
+                  <Search size={18} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+                  Search
+                </button>
+                <button
+                  style={styles.navButton}
+                  className="nav-button"
+                  onClick={() => setShowSettings(true)}
+                >
+                  <Settings size={18} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+                  Settings
+                </button>
+              </div>
+
+              {currentView === 'form' && <ComplaintForm isOnline={isOnline} />}
+              {currentView === 'dashboard' && <Dashboard />}
+              {currentView === 'search' && <SearchView />}
+            </div>
+          </div>
+
+          <button className="help-button" onClick={() => setShowHelp(true)}>
+            ?
+          </button>
+
+          <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+          <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+        </>
+      );
+    }
+
+    function ComplaintForm({ isOnline }) {
+      // Refs for auto-focus
+      const phoneAreaRef = useRef();
+      const phonePrefixRef = useRef();
+      const phoneLineRef = useRef();
+
+      const [formData, setFormData] = useState({
+        phoneArea: '',
+        phonePrefix: '',
+        phoneLine: '',
+        guestName: '',
+        orderNumber: '',
+        orderType: '',
+        issueType: '',
+        resolution: '',
+        includedDessert: false,
+        dayPart: '',
+        dateOccurred: '',
+        managerName: '',
+        notes: '',
+      });
+      const [submitStatus, setSubmitStatus] = useState('');
+      const [phoneHistory, setPhoneHistory] = useState(null);
+      const [showModal, setShowModal] = useState(false);
+      const [isChecking, setIsChecking] = useState(false);
+      const [isSubmitting, setIsSubmitting] = useState(false);
+      const [showConfirm, setShowConfirm] = useState(false);
+      const [rateLimitRemaining, setRateLimitRemaining] = useState(0);
+      const [validationErrors, setValidationErrors] = useState({});
+
+      // Debounce phone number for history check
+      const fullPhone = formData.phoneArea + formData.phonePrefix + formData.phoneLine;
+      const debouncedPhone = useDebounce(fullPhone, 500);
+
+      // Check phone history when debounced phone changes
+      useEffect(() => {
+        if (debouncedPhone.length === 10) {
+          checkPhoneHistory(debouncedPhone);
+        } else {
+          setPhoneHistory(null);
+        }
+      }, [debouncedPhone]);
+
+      // Queue for offline submissions
+      useEffect(() => {
+        if (isOnline) {
+          const queued = offlineQueue.getAll();
+          if (queued.length > 0) {
+            submitQueuedComplaints(queued);
+          }
+        }
+      }, [isOnline]);
+
+      const submitQueuedComplaints = async (complaints) => {
+        let successCount = 0;
+        for (const complaint of complaints) {
+          try {
+            await fetchWithRetry(APPS_SCRIPT_URL, {
+              method: 'POST',
+              body: JSON.stringify(complaint),
+            });
+            successCount++;
+          } catch (error) {
+            console.error('Error submitting queued complaint:', error);
+          }
+        }
+        offlineQueue.clear();
+        if (successCount > 0) {
+          setSubmitStatus(`Submitted ${successCount} queued complaint(s)`);
+        }
+      };
+
+      const checkPhoneHistory = async (phone) => {
+        if (phone.length !== 10) return;
+
+        // Validate phone first
+        const phoneValidation = validatePhone(
+          phone.substring(0, 3),
+          phone.substring(3, 6),
+          phone.substring(6, 10)
+        );
+        if (!phoneValidation.valid) {
+          setValidationErrors(prev => ({ ...prev, phone: phoneValidation.error }));
+          return;
+        } else {
+          setValidationErrors(prev => {
+            const { phone, ...rest } = prev;
+            return rest;
+          });
+        }
+
+        setIsChecking(true);
+        try {
+          const response = await fetchWithRetry(`${APPS_SCRIPT_URL}?action=checkPhone&phone=${phone}`);
+          const data = await response.json();
+
+          if (data.count >= 2) {
+            setPhoneHistory(data);
+          } else {
+            setPhoneHistory(null);
+          }
+        } catch (error) {
+          console.error('Error checking phone history:', error);
+        } finally {
+          setIsChecking(false);
+        }
+      };
+
+      const handlePhoneChange = (field, value, nextRef) => {
+        const numericValue = value.replace(/\D/g, '');
+        const maxLength = field === 'phoneLine' ? 4 : 3;
+
+        if (numericValue.length <= maxLength) {
+          setFormData(prev => ({ ...prev, [field]: numericValue }));
+
+          // Auto-advance to next field when complete
+          if (numericValue.length === maxLength && nextRef) {
+            nextRef.current?.focus();
+          }
+        }
+      };
+
+      const handleSubmit = async (e) => {
+        e && e.preventDefault();
+        setShowConfirm(false);
+        setIsSubmitting(true);
+        setSubmitStatus('Submitting complaint...');
+
+        const submissionPhone = formData.phoneArea + formData.phonePrefix + formData.phoneLine;
+
+        const dataToSubmit = {
+          action: 'submit',
+          phone: submissionPhone,
+          guestName: formData.guestName,
+          orderNumber: formData.orderNumber,
+          orderType: formData.orderType,
+          issueType: formData.issueType,
+          resolution: formData.resolution,
+          includedDessert: formData.includedDessert,
+          dayPart: formData.dayPart,
+          dateOccurred: formData.dateOccurred,
+          managerName: formData.managerName,
+          notes: formData.notes,
+          timestamp: new Date().toISOString(),
+          resolved: false,
+        };
+
+        if (!isOnline) {
+          // Save to offline queue
+          offlineQueue.add(dataToSubmit);
+          setSubmitStatus(`Complaint saved locally. ${offlineQueue.getCount()} pending upload.`);
+          setIsSubmitting(false);
+          resetForm();
+          return;
+        }
+
+        try {
+          const response = await fetchWithRetry(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(dataToSubmit),
+          });
+
+          if (response.ok) {
+            setSubmitStatus('Complaint submitted successfully!');
+            apiCache.clear(); // Clear cache so dashboard/search show new data
+            resetForm();
+            // Start rate limiting
+            setRateLimitRemaining(30);
+            const interval = setInterval(() => {
+              setRateLimitRemaining(prev => {
+                if (prev <= 1) {
+                  clearInterval(interval);
+                  return 0;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+          } else {
+            throw new Error('Submission failed');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          setSubmitStatus(getErrorMessage(error, 'submit'));
+        } finally {
+          setIsSubmitting(false);
+          setTimeout(() => setSubmitStatus(''), 5000);
+        }
+      };
+
+      const resetForm = () => {
+        setFormData({
+          phoneArea: '',
+          phonePrefix: '',
+          phoneLine: '',
+          guestName: '',
+          orderNumber: '',
+          orderType: '',
+          issueType: '',
+          resolution: '',
+          includedDessert: false,
+          dayPart: '',
+          dateOccurred: '',
+          managerName: '',
+          notes: '',
+        });
+        setPhoneHistory(null);
+        setValidationErrors({});
+      };
+
+      const handleFormSubmit = (e) => {
+        e.preventDefault();
+
+        // Run validation
+        const errors = validateForm(formData);
+        setValidationErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+          return; // Don't submit if there are errors
+        }
+
+        setShowConfirm(true);
+      };
+
+      // Get today's date for max date validation
+      const today = new Date().toISOString().split('T')[0];
+
+      return (
+        <>
+          <form onSubmit={handleFormSubmit}>
+            <label style={styles.label}>Phone Number *</label>
+            <div style={styles.phoneContainer} className="phone-container">
+              <input
+                ref={phoneAreaRef}
+                type="text"
+                inputMode="numeric"
+                style={{
+                  ...styles.phoneInput,
+                  ...(validationErrors.phone ? { borderColor: '#dc3545' } : {})
+                }}
+                className="phone-input"
+                value={formData.phoneArea}
+                onChange={(e) => handlePhoneChange('phoneArea', e.target.value, phonePrefixRef)}
+                placeholder="555"
+                maxLength="3"
+                required
+                aria-label="Area code"
+              />
+              <input
+                ref={phonePrefixRef}
+                type="text"
+                inputMode="numeric"
+                style={{
+                  ...styles.phoneInput,
+                  ...(validationErrors.phone ? { borderColor: '#dc3545' } : {})
+                }}
+                className="phone-input"
+                value={formData.phonePrefix}
+                onChange={(e) => handlePhoneChange('phonePrefix', e.target.value, phoneLineRef)}
+                placeholder="123"
+                maxLength="3"
+                required
+                aria-label="Phone prefix"
+              />
+              <input
+                ref={phoneLineRef}
+                type="text"
+                inputMode="numeric"
+                style={{
+                  ...styles.phoneInput,
+                  ...(validationErrors.phone ? { borderColor: '#dc3545' } : {})
+                }}
+                className="phone-input"
+                value={formData.phoneLine}
+                onChange={(e) => handlePhoneChange('phoneLine', e.target.value, null)}
+                placeholder="4567"
+                maxLength="4"
+                required
+                aria-label="Phone line number"
+              />
+            </div>
+            {validationErrors.phone && (
+              <div className="field-error">{validationErrors.phone}</div>
+            )}
+
+            {isChecking && (
+              <div style={{ marginBottom: '10px' }}>
+                <LoadingSpinner text="Checking history..." />
+              </div>
+            )}
+
+            {phoneHistory && (
+              <div
+                style={phoneHistory.count === 2 ? { ...styles.badge, ...styles.yellowBadge } : { ...styles.badge, ...styles.redBadge }}
+                onClick={() => setShowModal(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setShowModal(true)}
+              >
+                <AlertCircle size={18} />
+                {phoneHistory.count === 2 ? 'Warning: This will be complaint #3 in 30 days' : `Alert: ${phoneHistory.count} complaints in 30 days`}
+                <span style={{ fontSize: '12px', marginLeft: '5px' }}>(Click to view)</span>
+              </div>
+            )}
+
+            <label style={styles.label}>Guest Name *</label>
+            <input
+              type="text"
+              style={{
+                ...styles.input,
+                ...(validationErrors.guestName ? { borderColor: '#dc3545' } : {})
+              }}
+              value={formData.guestName}
+              onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+              required
+              aria-label="Guest name"
+            />
+            {validationErrors.guestName && (
+              <div className="field-error">{validationErrors.guestName}</div>
+            )}
+
+            <label style={styles.label}>Order Number *</label>
+            <input
+              type="text"
+              style={styles.input}
+              value={formData.orderNumber}
+              onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+              required
+            />
+
+            <label style={styles.label}>Order Type *</label>
+            <select
+              style={styles.select}
+              value={formData.orderType}
+              onChange={(e) => setFormData({ ...formData, orderType: e.target.value })}
+              required
+            >
+              <option value="">Select order type</option>
+              <option value="Dine-in">Dine-in</option>
+              <option value="Drive-thru">Drive-thru</option>
+              <option value="Mobile Order">Mobile Order</option>
+              <option value="Delivery">Delivery</option>
+              <option value="Catering">Catering</option>
+            </select>
+
+            <label style={styles.label}>Issue Type *</label>
+            <select
+              style={styles.select}
+              value={formData.issueType}
+              onChange={(e) => setFormData({ ...formData, issueType: e.target.value })}
+              required
+            >
+              <option value="">Select issue type</option>
+              <option value="Missing Item">Missing Item</option>
+              <option value="Wrong Item">Wrong Item</option>
+              <option value="Food Quality">Food Quality</option>
+              <option value="Service Issue">Service Issue</option>
+              <option value="Wait Time">Wait Time</option>
+              <option value="Cleanliness">Cleanliness</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <label style={styles.label}>Resolution *</label>
+            <select
+              style={styles.select}
+              value={formData.resolution}
+              onChange={(e) => setFormData({ ...formData, resolution: e.target.value })}
+              required
+            >
+              <option value="">Select resolution</option>
+              <option value="Refund">Refund</option>
+              <option value="Replacement">Replacement</option>
+              <option value="Free Item">Free Item</option>
+              <option value="Apology Only">Apology Only</option>
+              <option value="No Resolution">No Resolution</option>
+            </select>
+
+            <div className="checkbox-container" style={{ marginBottom: '20px' }}>
+              <input
+                type="checkbox"
+                id="includedDessert"
+                checked={formData.includedDessert}
+                onChange={(e) => setFormData({ ...formData, includedDessert: e.target.checked })}
+              />
+              <label htmlFor="includedDessert">
+                Included free apology dessert (cookie/brownie/IceDream cone)
+              </label>
+            </div>
+
+            <label style={styles.label}>Day Part *</label>
+            <select
+              style={styles.select}
+              value={formData.dayPart}
+              onChange={(e) => setFormData({ ...formData, dayPart: e.target.value })}
+              required
+            >
+              <option value="">Select day part</option>
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+            </select>
+
+            <label style={styles.label}>Date Occurred *</label>
+            <input
+              type="date"
+              style={{
+                ...styles.input,
+                ...(validationErrors.dateOccurred ? { borderColor: '#dc3545' } : {})
+              }}
+              value={formData.dateOccurred}
+              onChange={(e) => setFormData({ ...formData, dateOccurred: e.target.value })}
+              max={today}
+              required
+              aria-label="Date complaint occurred"
+            />
+            {validationErrors.dateOccurred && (
+              <div className="field-error">{validationErrors.dateOccurred}</div>
+            )}
+
+            <label style={styles.label}>Manager Name *</label>
+            <input
+              type="text"
+              style={styles.input}
+              value={formData.managerName}
+              onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
+              required
+              aria-label="Manager name"
+            />
+
+            <label style={styles.label}>
+              Description *
+              <span className={`char-counter ${formData.notes.length < 10 ? 'char-counter-warning' : 'char-counter-ok'}`}>
+                ({formData.notes.length}/500 characters{formData.notes.length < 10 ? ' - minimum 10' : ''})
+              </span>
+            </label>
+            <textarea
+              style={{
+                ...styles.textarea,
+                ...(validationErrors.notes ? { borderColor: '#dc3545' } : {})
+              }}
+              value={formData.notes}
+              onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                  setFormData({ ...formData, notes: e.target.value });
+                }
+              }}
+              placeholder="Describe the complaint in detail (minimum 10 characters)..."
+              required
+              aria-label="Description of the complaint"
+            />
+            {validationErrors.notes && (
+              <div className="field-error">{validationErrors.notes}</div>
+            )}
+
+            {submitStatus && (
+              <div style={submitStatus.includes('success') || submitStatus.includes('saved') ? styles.successText : styles.errorText}>
+                {submitStatus}
+              </div>
+            )}
+
+            {rateLimitRemaining > 0 && (
+              <div style={{ ...styles.errorText, color: '#856404' }}>
+                Please wait {rateLimitRemaining} seconds before submitting another complaint
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              style={{
+                ...styles.button,
+                ...(isSubmitting || rateLimitRemaining > 0 ? styles.buttonDisabled : {})
+              }}
+              disabled={isSubmitting || rateLimitRemaining > 0}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Complaint'}
+            </button>
+          </form>
+
+          <ConfirmDialog
+            isOpen={showConfirm}
+            onClose={() => setShowConfirm(false)}
+            onConfirm={handleSubmit}
+            title="Confirm Submission"
+            message="Are you sure you want to submit this complaint?"
+            confirmText="Yes, Submit"
+            cancelText="Cancel"
+          />
+
+          {showModal && phoneHistory && (
+            <div style={styles.modal} onClick={() => setShowModal(false)}>
+              <div style={styles.modalContent} className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div style={styles.modalHeader}>
+                  <h2 style={styles.modalTitle}>Complaint History</h2>
+                  <button style={styles.closeButton} onClick={() => setShowModal(false)}>
+                    <X size={24} />
+                  </button>
+                </div>
+                <p style={{ marginBottom: '20px', color: '#666' }}>
+                  This guest has {phoneHistory.count} complaints in the last 60 days.
+                </p>
+                {phoneHistory.complaints.map((complaint, index) => (
+                  <div key={index} style={styles.complaintCard}>
+                    <div style={styles.complaintDate}>{new Date(complaint.timestamp).toLocaleDateString()}</div>
+                    <div style={styles.complaintDetail}><strong>Order:</strong> {complaint.orderNumber}</div>
+                    <div style={styles.complaintDetail}><strong>Issue:</strong> {complaint.issueType}</div>
+                    <div style={styles.complaintDetail}><strong>Resolution:</strong> {complaint.resolution}</div>
+                    {complaint.notes && <div style={styles.complaintDetail}><strong>Description:</strong> {complaint.notes}</div>}
+                    {complaint.resolved && <span className="resolved-badge">Resolved</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    function Dashboard() {
+      const [complaints, setComplaints] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [stats, setStats] = useState({
+        total: 0,
+        totalUnresolved: 0,
+        flaggedGuests: 0,
+        topIssue: '',
+        topDayPart: '',
+        topManager: '',
+      });
+      const [showResolvedFilter, setShowResolvedFilter] = useState(true);
+      const [resolvingId, setResolvingId] = useState(null);
+      const [followUpText, setFollowUpText] = useState('');
+      const [showGuestProfile, setShowGuestProfile] = useState(false);
+      const [guestProfilePhone, setGuestProfilePhone] = useState(null);
+      const archiveDays = parseInt(localStorage.getItem('archiveDays') || '35');
+
+      useEffect(() => {
+        fetchDashboardData();
+      }, []);
+
+      const fetchDashboardData = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(`${APPS_SCRIPT_URL}?action=getAll`);
+          const result = await response.json();
+          const data = result.data || result; // Extract array from response
+          
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - archiveDays);
+          
+          const activeComplaints = data.filter(complaint => {
+            const complaintDate = new Date(complaint.timestamp);
+            return complaintDate > cutoffDate;
+          });
+          
+          setComplaints(activeComplaints);
+          calculateStats(activeComplaints);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          alert('Unable to connect to Google Sheets. Please check your internet connection.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const calculateStats = (data) => {
+        const total = data.length;
+        const totalUnresolved = data.filter(c => !c.resolved).length;
+        
+        // Count unique guests with 3+ complaints
+        const phoneMap = {};
+        data.forEach(complaint => {
+          if (!phoneMap[complaint.phone]) {
+            phoneMap[complaint.phone] = [];
+          }
+          phoneMap[complaint.phone].push(complaint);
+        });
+        
+        const flaggedGuests = Object.values(phoneMap).filter(complaints => complaints.length >= 2).length;
+        
+        // Find top issue
+        const issueCount = {};
+        data.forEach(complaint => {
+          issueCount[complaint.issueType] = (issueCount[complaint.issueType] || 0) + 1;
+        });
+        const topIssue = Object.keys(issueCount).length > 0 
+          ? Object.keys(issueCount).reduce((a, b) => issueCount[a] > issueCount[b] ? a : b) 
+          : 'N/A';
+        
+        // Find top day part
+        const dayPartCount = {};
+        data.forEach(complaint => {
+          dayPartCount[complaint.dayPart] = (dayPartCount[complaint.dayPart] || 0) + 1;
+        });
+        const topDayPart = Object.keys(dayPartCount).length > 0
+          ? Object.keys(dayPartCount).reduce((a, b) => dayPartCount[a] > dayPartCount[b] ? a : b)
+          : 'N/A';
+        
+        // Find top manager
+        const managerCount = {};
+        data.forEach(complaint => {
+          managerCount[complaint.managerName] = (managerCount[complaint.managerName] || 0) + 1;
+        });
+        const topManager = Object.keys(managerCount).length > 0
+          ? Object.keys(managerCount).reduce((a, b) => managerCount[a] > managerCount[b] ? a : b)
+          : 'N/A';
+        
+        setStats({ total, totalUnresolved, flaggedGuests, topIssue, topDayPart, topManager });
+      };
+
+      const toggleResolved = async (complaint, followUpNotes) => {
+        try {
+          const newResolved = !complaint.resolved;
+          const notes = newResolved ? (followUpNotes || '') : (complaint.followUpNotes || '');
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'toggleResolved',
+              id: complaint.id,
+              resolved: newResolved,
+              followUpNotes: notes
+            }),
+          });
+          
+          if (response.ok) {
+            const updatedComplaints = complaints.map(c => 
+              c.id === complaint.id ? { ...c, resolved: newResolved, followUpNotes: notes } : c
+            );
+            setComplaints(updatedComplaints);
+            calculateStats(updatedComplaints);
+            apiCache.clear();
+          }
+        } catch (error) {
+          console.error('Error toggling resolved status:', error);
+        }
+      };
+
+      const filteredComplaints = showResolvedFilter 
+        ? complaints.filter(c => !c.resolved)
+        : complaints;
+
+      if (loading) {
+        return <LoadingSpinner text="Loading dashboard data..." />;
+      }
+
+      return (
+        <div>
+          <div style={styles.statsGrid} className="stats-grid">
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{stats.total}</div>
+              <div style={styles.statLabel}>Total Complaints ({archiveDays} days)</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{stats.totalUnresolved}</div>
+              <div style={styles.statLabel}>Unresolved Complaints</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{stats.flaggedGuests}</div>
+              <div style={styles.statLabel}>Flagged Guests (2+ in 30 days)</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{stats.topIssue}</div>
+              <div style={styles.statLabel}>Most Common Issue</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{stats.topDayPart}</div>
+              <div style={styles.statLabel}>Busiest Day Part</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>{stats.topManager}</div>
+              <div style={styles.statLabel}>Most Reports By</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ color: '#333' }}>Recent Complaints</h3>
+            <label className="checkbox-container">
+              <input
+                type="checkbox"
+                checked={showResolvedFilter}
+                onChange={(e) => setShowResolvedFilter(e.target.checked)}
+              />
+              <span>Hide resolved complaints</span>
+            </label>
+          </div>
+
+          {filteredComplaints.length === 0 ? (
+            <p style={{ color: '#999', textAlign: 'center' }}>No complaints to display</p>
+          ) : (
+            filteredComplaints.slice(0, 10).map((complaint, index) => (
+              <div key={index} className="result-card" style={{
+                ...styles.resultCard,
+                ...(complaint.resolved ? { opacity: 0.6, background: '#f8f9fa' } : {})
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <strong>{complaint.guestName}</strong>
+                  <span style={{ color: '#999', fontSize: '14px' }}>
+                    {new Date(complaint.timestamp).toLocaleDateString()}
+                    {complaint.resolved && <span className="resolved-badge">Resolved</span>}
+                  </span>
+                </div>
+                <div style={{ fontSize: '14px', color: '#666' }}>
+                  <div><strong>Phone:</strong> <span className="guest-profile-link" onClick={() => { setGuestProfilePhone(complaint.phone); setShowGuestProfile(true); }}>{String(complaint.phone).replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span></div>
+                  <div><strong>Order:</strong> {complaint.orderNumber} ({complaint.orderType})</div>
+                  <div><strong>Issue:</strong> {complaint.issueType}</div>
+                  <div>
+                    <strong>Resolution:</strong> {complaint.resolution}
+                    {complaint.includedDessert && <span style={{ color: '#28a745', marginLeft: '10px' }}>🍪 + Free Dessert</span>}
+                  </div>
+                  <div><strong>Manager:</strong> {complaint.managerName}</div>
+                  {complaint.notes && (
+                    <div style={{ marginTop: '10px', padding: '10px', background: '#f8f9fa', borderRadius: '6px' }}>
+                      <strong>Description:</strong> {complaint.notes}
+                    </div>
+                  )}
+                  {complaint.followUpNotes && (
+                    <div className="follow-up-notes">
+                      <strong>Follow-up:</strong> {complaint.followUpNotes}
+                    </div>
+                  )}
+                </div>
+                <div className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    checked={complaint.resolved || false}
+                    onChange={() => {
+                      if (complaint.resolved) {
+                        toggleResolved(complaint);
+                      } else {
+                        setResolvingId(complaint.id);
+                        setFollowUpText('');
+                      }
+                    }}
+                    id={`resolve-${complaint.id}`}
+                    aria-label={`Mark ${complaint.guestName}'s complaint as resolved`}
+                  />
+                  <span>Mark as resolved</span>
+                </div>
+                {resolvingId === complaint.id && (
+                  <div className="resolve-form">
+                    <label style={{ fontSize: '13px', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                      Follow-up notes (optional)
+                    </label>
+                    <textarea
+                      value={followUpText}
+                      onChange={(e) => setFollowUpText(e.target.value)}
+                      placeholder="Describe how this was resolved..."
+                    />
+                    <div className="resolve-form-buttons">
+                      <button
+                        onClick={() => setResolvingId(null)}
+                        style={{ padding: '6px 16px', border: '1px solid #e0e0e0', borderRadius: '6px', background: 'white', cursor: 'pointer', fontSize: '13px' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => { toggleResolved(complaint, followUpText); setResolvingId(null); }}
+                        style={{ padding: '6px 16px', border: 'none', borderRadius: '6px', background: '#28a745', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                      >
+                        Mark Resolved
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+
+          {/* Analytics Section */}
+          {complaints.length > 0 && (
+            <div className="analytics-section">
+              <h3 style={{ color: '#333', marginBottom: '10px' }}>Analytics</h3>
+              <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
+                Insights from complaints in the last {archiveDays} days
+              </p>
+              <div className="analytics-grid">
+                <AnalyticsChart
+                  data={calculateDayOfWeekStats(complaints)}
+                  title="Complaints by Day of Week"
+                />
+                <AnalyticsChart
+                  data={calculateWeeklyTrend(complaints)}
+                  title="Weekly Trend (Last 4 Weeks)"
+                />
+                <EffectivenessTable
+                  data={calculateResolutionEffectiveness(complaints)}
+                />
+              </div>
+            </div>
+          )}
+
+          <GuestProfileModal
+            isOpen={showGuestProfile}
+            onClose={() => setShowGuestProfile(false)}
+            phone={guestProfilePhone}
+            complaints={complaints}
+          />
+        </div>
+      );
+    }
+
+    function SearchView() {
+      const [searchTerm, setSearchTerm] = useState('');
+      const [filterType, setFilterType] = useState('all');
+      const [results, setResults] = useState([]);
+      const [allComplaints, setAllComplaints] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [editingComplaint, setEditingComplaint] = useState(null);
+      const [showEditModal, setShowEditModal] = useState(false);
+      const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+      const [complaintToDelete, setComplaintToDelete] = useState(null);
+      const [hideResolved, setHideResolved] = useState(false);
+      const [sortBy, setSortBy] = useState('date-desc');
+      const [resolvingId, setResolvingId] = useState(null);
+      const [followUpText, setFollowUpText] = useState('');
+      const [showGuestProfile, setShowGuestProfile] = useState(false);
+      const [guestProfilePhone, setGuestProfilePhone] = useState(null);
+      const archiveDays = parseInt(localStorage.getItem('archiveDays') || '35');
+
+      // Pagination state
+      const [currentPage, setCurrentPage] = useState(1);
+      const resultsPerPage = 20;
+
+      useEffect(() => {
+        fetchAllComplaints();
+      }, []);
+
+      // Reset to page 1 when search/filter/sort changes
+      useEffect(() => {
+        setCurrentPage(1);
+      }, [searchTerm, filterType, sortBy, hideResolved]);
+
+      const fetchAllComplaints = async () => {
+        setLoading(true);
+        setError(null);
+
+        // Check cache first
+        const cached = apiCache.get('allComplaints');
+        if (cached) {
+          setAllComplaints(cached);
+          setResults(cached);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const response = await fetchWithRetry(`${APPS_SCRIPT_URL}?action=getAll`);
+          const result = await response.json();
+
+          // Extract the data array from the response
+          const data = result.data || result;
+
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - archiveDays);
+
+          const activeComplaints = data.filter(complaint => {
+            const complaintDate = new Date(complaint.timestamp);
+            return complaintDate > cutoffDate;
+          });
+
+          // Cache the results
+          apiCache.set('allComplaints', activeComplaints, 2);
+
+          setAllComplaints(activeComplaints);
+          setResults(activeComplaints);
+        } catch (err) {
+          console.error('Error fetching data:', err);
+          setError(getErrorMessage(err, 'fetch'));
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleSearch = (term, filter) => {
+        setSearchTerm(term);
+        setFilterType(filter);
+
+        if (!term.trim()) {
+          setResults(allComplaints);
+          return;
+        }
+
+        const searchLower = term.toLowerCase();
+        const normalizedPhone = term.replace(/\D/g, '');
+
+        const filtered = allComplaints.filter(complaint => {
+          const name = String(complaint.guestName ?? '').toLowerCase();
+          const phone = String(complaint.phone ?? '');
+          const order = String(complaint.orderNumber ?? '').toLowerCase();
+          const issue = String(complaint.issueType ?? '').toLowerCase();
+          const manager = String(complaint.managerName ?? '').toLowerCase();
+          const notes = String(complaint.notes ?? '').toLowerCase();
+
+          if (filter === 'all') {
+            return (
+              name.includes(searchLower) ||
+              (normalizedPhone && phone.includes(normalizedPhone)) ||
+              order.includes(searchLower) ||
+              issue.includes(searchLower) ||
+              manager.includes(searchLower) ||
+              notes.includes(searchLower)
+            );
+          } else if (filter === 'phone') {
+            return phone.includes(normalizedPhone);
+          } else if (filter === 'name') {
+            return name.includes(searchLower);
+          } else if (filter === 'order') {
+            return order.includes(searchLower);
+          } else if (filter === 'issue') {
+            return issue.includes(searchLower);
+          } else if (filter === 'manager') {
+            return manager.includes(searchLower);
+          } else if (filter === 'notes') {
+            return notes.includes(searchLower);
+          }
+          return false;
+        });
+
+        setResults(filtered);
+      };
+
+      // Process results: hide resolved -> sort -> paginate
+      const processedResults = useMemo(() => {
+        let processed = hideResolved ? results.filter(c => !c.resolved) : results;
+
+        const sorted = [...processed];
+        switch (sortBy) {
+          case 'date-desc':
+            sorted.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            break;
+          case 'date-asc':
+            sorted.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            break;
+          case 'name-asc':
+            sorted.sort((a, b) => (a.guestName || '').localeCompare(b.guestName || ''));
+            break;
+          case 'name-desc':
+            sorted.sort((a, b) => (b.guestName || '').localeCompare(a.guestName || ''));
+            break;
+          case 'issue':
+            sorted.sort((a, b) => (a.issueType || '').localeCompare(b.issueType || ''));
+            break;
+          case 'resolved':
+            sorted.sort((a, b) => (a.resolved === b.resolved ? 0 : a.resolved ? 1 : -1));
+            break;
+        }
+        return sorted;
+      }, [results, hideResolved, sortBy]);
+
+      const totalPages = Math.ceil(processedResults.length / resultsPerPage);
+      const indexOfLastResult = currentPage * resultsPerPage;
+      const indexOfFirstResult = indexOfLastResult - resultsPerPage;
+      const currentResults = processedResults.slice(indexOfFirstResult, indexOfLastResult);
+
+      const handleEdit = (complaint) => {
+        setEditingComplaint(complaint);
+        setShowEditModal(true);
+      };
+
+      const handleSaveEdit = async (updatedComplaint) => {
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'update',
+              ...updatedComplaint
+            }),
+          });
+          
+          if (response.ok) {
+            const updatedComplaints = allComplaints.map(c => 
+              c.id === updatedComplaint.id ? updatedComplaint : c
+            );
+            setAllComplaints(updatedComplaints);
+            handleSearch(searchTerm, filterType);
+            setShowEditModal(false);
+          }
+        } catch (error) {
+          console.error('Error updating complaint:', error);
+        }
+      };
+
+      const handleDelete = async () => {
+        if (!complaintToDelete) return;
+        
+        try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'delete',
+              id: complaintToDelete.id
+            }),
+          });
+          
+          if (response.ok) {
+            const updatedComplaints = allComplaints.filter(c => c.id !== complaintToDelete.id);
+            setAllComplaints(updatedComplaints);
+            handleSearch(searchTerm, filterType);
+            setShowDeleteConfirm(false);
+            setComplaintToDelete(null);
+          }
+        } catch (error) {
+          console.error('Error deleting complaint:', error);
+        }
+      };
+
+      const toggleResolved = async (complaint, followUpNotes) => {
+        try {
+          const newResolved = !complaint.resolved;
+          const notes = newResolved ? (followUpNotes || '') : (complaint.followUpNotes || '');
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'toggleResolved',
+              id: complaint.id,
+              resolved: newResolved,
+              followUpNotes: notes
+            }),
+          });
+          
+          if (response.ok) {
+            const updatedComplaints = allComplaints.map(c => 
+              c.id === complaint.id ? { ...c, resolved: newResolved, followUpNotes: notes } : c
+            );
+            setAllComplaints(updatedComplaints);
+            const updatedResults = results.map(c =>
+              c.id === complaint.id ? { ...c, resolved: newResolved, followUpNotes: notes } : c
+            );
+            setResults(updatedResults);
+            apiCache.clear();
+          }
+        } catch (error) {
+          console.error('Error toggling resolved status:', error);
+        }
+      };
+
+      if (loading) {
+        return <LoadingSpinner text="Loading complaints..." />;
+      }
+
+      if (error) {
+        return (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ color: '#dc3545', marginBottom: '20px' }}>{error}</div>
+            <button
+              onClick={() => {
+                apiCache.clear();
+                fetchAllComplaints();
+              }}
+              style={{ ...styles.button, width: 'auto', padding: '10px 30px' }}
+            >
+              Retry
+            </button>
+          </div>
+        );
+      }
+
+      return (
+        <div>
+          <div style={styles.searchContainer}>
+            <div style={{ marginBottom: '10px' }}>
+              <select
+                style={{ ...styles.select, width: '200px', marginBottom: '10px' }}
+                className="filter-select"
+                value={filterType}
+                onChange={(e) => {
+                  setFilterType(e.target.value);
+                  handleSearch(searchTerm, e.target.value);
+                }}
+                aria-label="Filter by field"
+              >
+                <option value="all">All Fields</option>
+                <option value="phone">Phone Number</option>
+                <option value="name">Guest Name</option>
+                <option value="order">Order Number</option>
+                <option value="issue">Issue Type</option>
+                <option value="manager">Manager Name</option>
+                <option value="notes">Description</option>
+              </select>
+              {filterType !== 'all' && (
+                <span className="active-filter-badge">
+                  Filtering by: {filterType}
+                </span>
+              )}
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                style={styles.searchInput}
+                aria-label="Search complaints"
+                placeholder={
+                  filterType === 'all' 
+                    ? "Search all fields..." 
+                    : `Search by ${filterType}...`
+                }
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value, filterType)}
+              />
+              <Search
+                size={20}
+                color="#999"
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }} className="search-controls">
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <select
+                style={{ ...styles.select, width: '170px', marginBottom: '0' }}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                aria-label="Sort results"
+              >
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+                <option value="issue">Issue Type</option>
+                <option value="resolved">Resolved Status</option>
+              </select>
+              {sortBy !== 'date-desc' && (
+                <span className="sort-badge">
+                  Sorted: {
+                    { 'date-asc': 'Oldest', 'name-asc': 'A-Z', 'name-desc': 'Z-A', 'issue': 'Issue', 'resolved': 'Status' }[sortBy]
+                  }
+                </span>
+              )}
+            </div>
+            <label className="checkbox-container" style={{ marginTop: '0' }}>
+              <input
+                type="checkbox"
+                checked={hideResolved}
+                onChange={(e) => setHideResolved(e.target.checked)}
+              />
+              <span>Hide resolved</span>
+            </label>
+          </div>
+
+          <div style={{ marginBottom: '20px', color: '#666' }}>
+            {processedResults.length === 0 ? (
+              <span>No results found</span>
+            ) : (
+              <span>
+                Showing {indexOfFirstResult + 1}-{Math.min(indexOfLastResult, processedResults.length)} of {processedResults.length} results
+                {processedResults.length !== allComplaints.length && ` (filtered from ${allComplaints.length} total)`}
+              </span>
+            )}
+          </div>
+
+          <div style={styles.resultsContainer}>
+            {currentResults.map((complaint, index) => (
+              <div key={complaint.id || index} className="result-card" style={{
+                ...styles.resultCard,
+                ...(complaint.resolved ? { opacity: 0.6, background: '#f8f9fa' } : {})
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <strong style={{ fontSize: '18px' }}>{complaint.guestName}</strong>
+                  <span style={{ color: '#999', fontSize: '14px' }}>
+                    {new Date(complaint.timestamp).toLocaleDateString()}
+                    {complaint.resolved && <span className="resolved-badge">✓ Resolved</span>}
+                  </span>
+                </div>
+                <div style={{ fontSize: '14px', color: '#666', lineHeight: '1.6' }}>
+                  <div><strong>Phone:</strong> <span className="guest-profile-link" onClick={() => { setGuestProfilePhone(complaint.phone); setShowGuestProfile(true); }}>{String(complaint.phone).replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')}</span></div>
+                  <div><strong>Order:</strong> {complaint.orderNumber} ({complaint.orderType})</div>
+                  <div><strong>Issue:</strong> {complaint.issueType}</div>
+                  <div>
+                    <strong>Resolution:</strong> {complaint.resolution}
+                    {complaint.includedDessert && <span style={{ color: '#28a745', marginLeft: '10px' }}>🍪 + Free Dessert</span>}
+                  </div>
+                  <div><strong>Day Part:</strong> {complaint.dayPart}</div>
+                  <div><strong>Date Occurred:</strong> {complaint.dateOccurred}</div>
+                  <div><strong>Manager:</strong> {complaint.managerName}</div>
+                  {complaint.notes && <div style={{ marginTop: '10px' }}><strong>Description:</strong> {complaint.notes}</div>}
+                  {complaint.followUpNotes && (
+                    <div className="follow-up-notes">
+                      <strong>Follow-up:</strong> {complaint.followUpNotes}
+                    </div>
+                  )}
+                </div>
+                <div style={styles.actionButtons} className="action-buttons">
+                  <button style={styles.actionButton} onClick={() => handleEdit(complaint)} aria-label={`Edit complaint for ${complaint.guestName}`}>
+                    <Edit size={16} /> Edit
+                  </button>
+                  <button
+                    style={{ ...styles.actionButton, borderColor: '#dc3545', color: '#dc3545' }}
+                    onClick={() => {
+                      setComplaintToDelete(complaint);
+                      setShowDeleteConfirm(true);
+                    }}
+                    aria-label={`Delete complaint for ${complaint.guestName}`}
+                  >
+                    <Trash size={16} /> Delete
+                  </button>
+                </div>
+                <div className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    checked={complaint.resolved || false}
+                    onChange={() => {
+                      if (complaint.resolved) {
+                        toggleResolved(complaint);
+                      } else {
+                        setResolvingId(complaint.id);
+                        setFollowUpText('');
+                      }
+                    }}
+                    id={`search-resolve-${complaint.id}`}
+                    aria-label={`Mark ${complaint.guestName}'s complaint as resolved`}
+                  />
+                  <span>Mark as resolved</span>
+                </div>
+                {resolvingId === complaint.id && (
+                  <div className="resolve-form">
+                    <label style={{ fontSize: '13px', fontWeight: '600', marginBottom: '5px', display: 'block' }}>
+                      Follow-up notes (optional)
+                    </label>
+                    <textarea
+                      value={followUpText}
+                      onChange={(e) => setFollowUpText(e.target.value)}
+                      placeholder="Describe how this was resolved..."
+                    />
+                    <div className="resolve-form-buttons">
+                      <button
+                        onClick={() => setResolvingId(null)}
+                        style={{ padding: '6px 16px', border: '1px solid #e0e0e0', borderRadius: '6px', background: 'white', cursor: 'pointer', fontSize: '13px' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => { toggleResolved(complaint, followUpText); setResolvingId(null); }}
+                        style={{ padding: '6px 16px', border: 'none', borderRadius: '6px', background: '#28a745', color: 'white', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}
+                      >
+                        Mark Resolved
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="pagination" role="navigation" aria-label="Pagination">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                aria-label="Previous page"
+              >
+                Previous
+              </button>
+              <span className="pagination-info">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Next page"
+              >
+                Next
+              </button>
+            </div>
+          )}
+
+          <EditComplaintModal
+            complaint={editingComplaint}
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleSaveEdit}
+          />
+
+          <ConfirmDialog
+            isOpen={showDeleteConfirm}
+            onClose={() => {
+              setShowDeleteConfirm(false);
+              setComplaintToDelete(null);
+            }}
+            onConfirm={handleDelete}
+            title="Delete Complaint"
+            message="Are you sure you want to delete this complaint? This action cannot be undone."
+            confirmText="Delete"
+            cancelText="Cancel"
+          />
+
+          <GuestProfileModal
+            isOpen={showGuestProfile}
+            onClose={() => setShowGuestProfile(false)}
+            phone={guestProfilePhone}
+            complaints={allComplaints}
+          />
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
