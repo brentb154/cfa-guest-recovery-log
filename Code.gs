@@ -15,6 +15,11 @@ const FIELD_ALIASES = {
                    'resolution','notes','dateOccurred','timestamp',
                    'managerName','dayPart','resolved'];
 
+  // Repeat-complainer window + email-alert threshold. Keep these in sync with the
+  // wording in index.html ("complaints in N days").
+  const REPEAT_WINDOW_DAYS = 30;
+  const ALERT_THRESHOLD    = 4;   // email alert fires when a guest hits this many in the window
+
   // ----------------------------------------------------------------------
   // FIRST-TIME SETUP
   // Run this ONCE in the Apps Script editor after pasting your SHEET_ID above.
@@ -47,6 +52,15 @@ const FIELD_ALIASES = {
     const emailsInit = props.getProperty('alertEmails') === null;
     if (emailsInit) props.setProperty('alertEmails', '[]');
 
+    // 4) Generate a shared API token so the open web-app URL isn't readable by anyone.
+    //    The same token must be pasted into index.html (API_TOKEN).
+    let apiToken = props.getProperty('apiToken');
+    const tokenInit = !apiToken;
+    if (!apiToken) {
+      apiToken = Utilities.getUuid().replace(/-/g, '');
+      props.setProperty('apiToken', apiToken);
+    }
+
     SpreadsheetApp.flush();
 
     const msg =
@@ -54,11 +68,15 @@ const FIELD_ALIASES = {
       'Spreadsheet : ' + ss.getName() + '\n' +
       'Data tab    : ' + SHEET_NAME + (tabCreated ? '  (created)' : '  (already existed)') + '\n' +
       'Headers     : ' + (hasHeaders ? 'already present — left as-is' : 'written') + '\n' +
-      'Alert emails: ' + (emailsInit ? 'initialized' : 'already configured') + '\n\n' +
+      'Alert emails: ' + (emailsInit ? 'initialized' : 'already configured') + '\n' +
+      'API token   : ' + (tokenInit ? 'generated' : 'already set') + '\n\n' +
+      '>>> API TOKEN (paste into index.html API_TOKEN):\n' +
+      '    ' + apiToken + '\n\n' +
       'NEXT STEP: Deploy ▸ New deployment ▸ Web app\n' +
       '  • Execute as: Me\n' +
       '  • Who has access: Anyone\n' +
-      'Then copy the web app URL into index.html (APPS_SCRIPT_URL). See SETUP_GUIDE.md Step 4.';
+      'Then copy the web app URL into index.html (APPS_SCRIPT_URL) and paste the\n' +
+      'API token above into index.html (API_TOKEN). See SETUP_GUIDE.md Steps 4-5.';
 
     Logger.log(msg);
     return msg;
@@ -69,8 +87,9 @@ const FIELD_ALIASES = {
   // GET  handler
   function doGet(e) {
     try {
+      requireAuth_(e && e.parameter && e.parameter.token);
       const action = e && e.parameter && e.parameter.action;
-  
+
       if (action === 'checkPhone') {
         return handleCheckPhone(e);
       }
@@ -95,31 +114,34 @@ const FIELD_ALIASES = {
   function doPost(e) {
     try {
       const request = JSON.parse(e.postData.contents);
+      requireAuth_(request.token);
       const action  = request.action || 'add';
-  
+
+      // All write actions go through a script lock so two managers acting at once
+      // can't clobber each other or delete the wrong row.
       switch (action) {
         case 'add':
         case 'submit':                 // <— matches frontend
-          return addComplaint(request);
-  
+          return withLock_(function(){ return addComplaint(request); });
+
         case 'update':
-          return updateComplaint(request);
-  
+          return withLock_(function(){ return updateComplaint(request); });
+
         case 'delete':
-          return deleteComplaint(request);
-  
+          return withLock_(function(){ return deleteComplaint(request); });
+
         case 'toggleResolved':
-          return toggleResolved(request);
-  
+          return withLock_(function(){ return toggleResolved(request); });
+
         case 'getEmailSettings':       // allow POST too
           return outputJson({ emails: readAlertEmails() });
-  
+
         case 'addEmail':
-          return addEmail(request);
-  
+          return withLock_(function(){ return addEmail(request); });
+
         case 'removeEmail':
-          return removeEmail(request);
-  
+          return withLock_(function(){ return removeEmail(request); });
+
         default:
           throw new Error('Unknown action: ' + action);
       }
@@ -175,7 +197,10 @@ const FIELD_ALIASES = {
     } else {
       sheet.appendRow(row);
     }
-  
+
+    // Email the alert list if this guest just crossed the repeat threshold.
+    sendRepeatAlertIfNeeded_(c.phone, c);
+
     return outputJson({ success: true, message: 'Complaint added successfully' });
   }
   
@@ -283,17 +308,70 @@ const FIELD_ALIASES = {
     const phone = (e.parameter && e.parameter.phone) || '';
     if (!phone) return outputJson({ count:0, complaints:[] });
   
-    const all      = readAllComplaintsNormalized();
-    const now      = new Date();
-    const cutoff   = new Date(now.getTime() - 60*24*60*60*1000); // 60 days
-    const recent   = all.filter(c=>{
-      if (String(c.phone)!==String(phone)) return false;
-      const d=new Date(c.timestamp); return !isNaN(d) && d>=cutoff;
-    }).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-  
+    const recent = recentForPhone_(phone);
     return outputJson({ count: recent.length, complaints: recent });
   }
+
+  // Complaints for one phone within the repeat window, newest first.
+  function recentForPhone_(phone) {
+    const cutoff = new Date(Date.now() - REPEAT_WINDOW_DAYS*24*60*60*1000);
+    return readAllComplaintsNormalized().filter(function(c){
+      if (String(c.phone) !== String(phone)) return false;
+      const d = new Date(c.timestamp); return !isNaN(d) && d >= cutoff;
+    }).sort(function(a,b){ return new Date(b.timestamp) - new Date(a.timestamp); });
+  }
   
+  // ----------------------------------------------------------------------
+  // Security: reject calls that don't carry the shared token.
+  // If no token has been configured yet (pre-setup), access is allowed so the
+  // app keeps working until you run runFirstTimeSetup.
+  function requireAuth_(provided){
+    const expected = PropertiesService.getScriptProperties().getProperty('apiToken');
+    if (expected && provided !== expected) {
+      throw new Error('Unauthorized');
+    }
+  }
+
+  // Run a write inside a script lock to prevent concurrent-edit corruption.
+  function withLock_(fn){
+    const lock = LockService.getScriptLock();
+    lock.waitLock(20000);
+    try { return fn(); } finally { lock.releaseLock(); }
+  }
+
+  // ----------------------------------------------------------------------
+  // Email a repeat-complainer alert to the configured recipients.
+  // Fires only when the guest has reached ALERT_THRESHOLD within the window.
+  // Wrapped so an email failure never blocks saving the complaint.
+  function sendRepeatAlertIfNeeded_(phone, latest){
+    try {
+      if (!phone) return;
+      const recipients = readAlertEmails();
+      if (!recipients.length) return;
+
+      const recent = recentForPhone_(phone);
+      if (recent.length < ALERT_THRESHOLD) return;
+
+      const guest   = (latest && latest.guestName) || 'Unknown guest';
+      const subject = 'H.E.A.R.D. Log: Repeat guest alert — ' + recent.length +
+                      ' complaints in ' + REPEAT_WINDOW_DAYS + ' days';
+      const body =
+        guest + ' (' + phone + ') now has ' + recent.length +
+        ' complaints in the last ' + REPEAT_WINDOW_DAYS + ' days.\n\n' +
+        'Most recent:\n' +
+        '  Issue      : ' + ((latest && latest.issueType)  || '') + '\n' +
+        '  Resolution : ' + ((latest && latest.resolution) || '') + '\n' +
+        '  Order type : ' + ((latest && latest.orderType)  || '') + '\n' +
+        '  Daypart    : ' + ((latest && latest.dayPart)    || '') + '\n' +
+        '  Logged by  : ' + ((latest && latest.managerName)|| '') + '\n' +
+        '  Notes      : ' + ((latest && latest.notes)      || '') + '\n';
+
+      MailApp.sendEmail(recipients.join(','), subject, body);
+    } catch (err) {
+      Logger.log('Repeat-alert email failed: ' + err);
+    }
+  }
+
   // ----------------------------------------------------------------------
   // Utility output helpers
   function outputJson(obj){

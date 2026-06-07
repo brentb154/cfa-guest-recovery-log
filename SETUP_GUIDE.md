@@ -126,7 +126,13 @@ This gives your backend a web address the app can talk to.
    ```
    Change `YOUR_SETTINGS_PASSCODE` to a **different** 4-digit code only **managers** know — this protects the email-alert settings (e.g. `'5678'`). Keep the quotes.
 
-5. **Save** the file.
+5. Paste your **API token**. Find:
+   ```js
+   const API_TOKEN = 'YOUR_API_TOKEN';
+   ```
+   Replace `YOUR_API_TOKEN` with the token that `runFirstTimeSetup` printed in the execution log back in Step 3 (a long string of letters and numbers). Keep the quotes. **This must match exactly** — it's the shared secret that stops anyone with your web-app URL from reading or changing your guest data. If you lost it, just re-run `runFirstTimeSetup` and look at the log again.
+
+6. **Save** the file.
 
 ---
 
@@ -205,9 +211,12 @@ The `SHEET_NAME` in `Code.gs` must exactly match your tab name, including capita
 | Tab name | `Code.gs` → `SHEET_NAME` |
 | One-click setup | `Code.gs` → run `runFirstTimeSetup` |
 | Web app URL | `index.html` → `APPS_SCRIPT_URL` |
+| API token | `index.html` → `API_TOKEN` (must match the token from `runFirstTimeSetup`) |
 | Login passcode | `index.html` → `YOUR_LOGIN_PASSCODE` |
 | Settings passcode | `index.html` → `YOUR_SETTINGS_PASSCODE` |
 | Alert emails | App ▸ Settings (stored on backend) |
+
+> **Note on security:** the login/settings passcodes are convenience locks in the browser only. The **API token** is what actually protects your data — without a matching token, the backend rejects every read and write. Keep it private, and don't commit your real token to a public repo.
 
 ---
 Built with care for Cockrell Hill Chick-fil-A

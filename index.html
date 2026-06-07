@@ -1107,6 +1107,28 @@
     // SETUP: paste your deployed Apps Script web app URL here (see SETUP_GUIDE.md, Step 4)
     const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL';
 
+    // SETUP: paste the API token printed by runFirstTimeSetup here (SETUP_GUIDE.md, Step 5)
+    const API_TOKEN = 'YOUR_API_TOKEN';
+
+    // Attach the shared token to every backend call so the web-app URL alone
+    // can't read or write your guest data.
+    (function () {
+      var _fetch = window.fetch;
+      window.fetch = function (input, init) {
+        try {
+          var url = (typeof input === 'string') ? input : (input && input.url);
+          if (url && url.indexOf(APPS_SCRIPT_URL) === 0) {
+            url += (url.indexOf('?') > -1 ? '&' : '?') + 'token=' + encodeURIComponent(API_TOKEN);
+            if (init && typeof init.body === 'string') {
+              try { var b = JSON.parse(init.body); b.token = API_TOKEN; init.body = JSON.stringify(b); } catch (e) {}
+            }
+            input = (typeof input === 'string') ? url : new Request(url, input);
+          }
+        } catch (e) {}
+        return _fetch.call(this, input, init);
+      };
+    })();
+
     // Session timeout utility
     function useSessionTimeout(timeoutMinutes = 30, onTimeout) {
       const timeoutRef = useRef();
@@ -2562,7 +2584,7 @@
                   </button>
                 </div>
                 <p style={{ marginBottom: '20px', color: '#666' }}>
-                  This guest has {phoneHistory.count} complaints in the last 60 days.
+                  This guest has {phoneHistory.count} complaints in the last 30 days.
                 </p>
                 {phoneHistory.complaints.map((complaint, index) => (
                   <div key={index} style={styles.complaintCard}>
